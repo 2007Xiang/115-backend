@@ -1,9 +1,16 @@
-"""Week 1: one Chat Completions request, no tools."""
-from agent.core import AgentError, call_api
+"""Week 1: One HTTP POST and inspect message, status, usage."""
+from agent.cli import load_env
+from agent.core import NvidiaClient, get_message, ApiError, settings
 
 if __name__ == "__main__":
+    load_env()
+    cfg = settings()
+    client = NvidiaClient(model=cfg["model"], url=cfg["api_url"], timeout=cfg["timeout"], max_tokens=cfg["max_tokens"])
     try:
-        message, _ = call_api([{"role": "user", "content": "請用繁體中文說明 API 是什麼，100 字內。"}])
-        print("AI：", message.get("content") or "（模型沒有文字回答）")
-    except AgentError as e:
-        print("錯誤：", e)
+        result = client.complete([{"role": "user", "content": "用一句話解釋 HTTP。"}])
+        print("status_code: 200 (HTTP request succeeded)")
+        print("content:", get_message(result).get("content"))
+        print("usage:", result.get("usage"))
+    except ApiError as exc:
+        print(exc)
+        raise SystemExit(1)
